@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
 using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,15 +36,17 @@ namespace API.Controllers
 
             var userLike = await _likesRepository.GetUserLike(sourceUserId, likedUser.Id);
 
-            // if (userLike != null) return BadRequest("You already like this user");
+            if (userLike != null) return BadRequest("You already like this user");
 
-            if (userLike != null) 
-            {
-                sourceUser.LikedUsers.Remove(userLike);
-            }
-            else {
-                sourceUser.LikedUsers.Add(userLike);
-            }
+            // Unlike function has to be revised
+
+            // if (userLike != null) 
+            // {
+            //     sourceUser.LikedUsers.Remove(userLike);
+            // }
+            // else {
+            //     sourceUser.LikedUsers.Add(userLike);
+            // }
 
             userLike = new UserLike
             {
@@ -59,9 +62,12 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<LikeDto>>> GetUserLikes(string predicate)
+        public async Task<ActionResult<IEnumerable<LikeDto>>> GetUserLikes([FromQuery]LikesParams likesParams)
         {
-            var users =  await _likesRepository.GetUserLikes(predicate, User.GetUserId());
+            likesParams.UserId = User.GetUserId();
+            var users =  await _likesRepository.GetUserLikes(likesParams);
+
+            Response.AddPaginationHeader(users.CurrentPage, users.PageSize,users.TotalCount, users.TotalPages);
 
             return Ok(users);
         }
